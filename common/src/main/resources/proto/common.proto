@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package common;
+
+message BigDecimal {
+    int64 intVal = 1;
+
+    int64 scale = 2;
+}

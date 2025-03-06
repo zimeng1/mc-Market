@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ethh.dal.mapper.OrderDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.ethh.dal.entity.OrderDetailPO">
+        <id column="ID" property="id" />
+        <result column="CreateTime" property="createtime" />
+        <result column="UpdateTime" property="updatetime" />
+        <result column="StrategyID" property="strategyid" />
+        <result column="BatchNo" property="batchno" />
+        <result column="OrderAlgoType" property="orderalgotype" />
+        <result column="OrderType" property="ordertype" />
+        <result column="ClientOrderID" property="clientorderid" />
+        <result column="UserId" property="userid" />
+        <result column="AccountNo" property="accountno" />
+        <result column="ExchangeCode" property="exchangecode" />
+        <result column="ContractCode" property="contractcode" />
+        <result column="OrderNo" property="orderno" />
+        <result column="OrderLevel" property="orderlevel" />
+        <result column="OrderQty" property="orderqty" />
+        <result column="FilledQty" property="filledqty" />
+        <result column="CancelledQty" property="cancelledqty" />
+        <result column="FilledAvgPrice" property="filledavgprice" />
+        <result column="IsCanceled" property="iscanceled" />
+        <result column="FilledTotalFee" property="filledtotalfee" />
+        <result column="SequenceNo" property="sequenceno" />
+        <result column="LongPosMargin" property="longposmargin" />
+        <result column="ShortPosMargin" property="shortposmargin" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, CreateTime, UpdateTime, StrategyID, BatchNo, OrderAlgoType, OrderType, ClientOrderID, UserId, AccountNo, ExchangeCode, ContractCode, OrderNo, OrderLevel, OrderQty, FilledQty, CancelledQty, FilledAvgPrice, IsCanceled, FilledTotalFee, SequenceNo, LongPosMargin, ShortPosMargin
+    </sql>
+
+<!--    <select id="getOrderDetail" parameterType="java.util.Map" resultType="org.ethh.dal.dto.OrderDetailDTO">-->
+
+<!--    </select>-->
+
+    <select id="pageOrderDetail" resultType="org.ethh.dal.dto.OrderDetailDTO">
+        SELECT t1.CreateTime AS orderTime, OrderNo AS orderNumber, t1.UpdateTime AS lastUpdateTime, t1.BatchNo AS tradeNumber, t1.ContractCode AS product, t1.OrderLevel AS orderLevel, t1.AlgoStatus AS algoStatus, t1.OrderType AS direction, NULL AS openCloseDirection, OrderPrice AS averagePrice,
+        CASE
+        WHEN OrderQty = FilledQty THEN '完全成交'
+        WHEN OrderQty = CancelledQty THEN '已撤单'
+        ELSE '部分成交'
+        END AS orderStatus, Bid AS buyPrice, Ask AS sellPrice, NULL AS marketPrice,
+        CASE
+        WHEN BidAskFlag = '1' THEN OrderPrice
+        ELSE ''
+        END AS buyOrderPrice,
+        CASE
+        WHEN BidAskFlag = '2' THEN OrderPrice
+        ELSE ''
+        END AS sellOrderPrice, NULL AS bestMidPrice, NULL AS bestSpread, NULL AS targetInventory, NULL AS actualInventory, Gamma AS toleranceFactor, Volatility AS volatility, Kappa AS orderBookLiquidity
+        FROM algorithm_strategy t2
+        left join order_detail t1 on t2.id=t1.StrategyID
+        where t2.id= #{req.algorithmStrategyId}
+        <if test="req.startTime != null">
+            AND t1.CreateTime >= #{req.startTime}
+        </if>
+        <if test="req.endTime != null">
+            <![CDATA[
+                AND t1.CreateTime <= #{req.endTime}
+                 ]]>
+        </if>
+    </select>
+
+</mapper>

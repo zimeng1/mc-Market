@@ -1,0 +1,73 @@
+syntax = "proto3";
+package position;
+
+message PositionRequest {
+  // 交易对
+  string symbol = 1;
+
+  // 数据源分组id
+  string group_id = 2;
+}
+
+message PositionReply {
+  // 当前版本唯一标识符, 单调递增
+  uint64 sequence_number = 1;
+
+  // 交易对
+  string symbol = 2;
+
+  // 资产的持有量
+  double quote_asset = 3;
+
+  // 数据源分组id
+  string group_id = 4;
+}
+
+// 账户资金信息请求
+message CapitalRequest {
+  string user_id = 1;
+  string group_id = 2;
+}
+
+// 账户资金信息应答
+message CapitalReply {
+  uint64 sequence_number = 1;    // 当前版本唯一标识符, 单调递增
+  string group_id = 2;           // 数据源分组id
+  string user_id = 3;            // 用户账号
+  string account_no = 4;         // 资金账号
+  string currency_no = 5;        // 币种
+  double available = 6;          // 今可用 ——余额 今可用+今冻结
+  double y_available = 7;        // 昨可用
+  double can_cash_out = 8;       // 今可出
+  double money = 9;              // 今结存
+  double expired_profit = 10;    // 平仓盈亏
+  double frozen_deposit = 11;    // 冻结资金 ——保证金
+  double unexpired_profit = 12;  // 未到期平盈
+  double today_total = 13;       // 今权益
+}
+
+message FullPosition {
+  uint64 sequence_number = 1; // 序列号
+  string group_id = 2;        // 数据源分组id
+  string user_id = 3;         // 资金账号
+  string account_no = 4;      // 资金账号
+  string exchange_code = 5;   // 交易所代码
+  string contract_code = 6;       // 合约代码
+  double long_position_qty = 7;   // 持买数量
+  double long_pos_average_prx = 8;    // 持买平均价
+  double short_position_qty = 9;      // 持卖数量
+  double short_pos_average_prx = 10;  // 持卖开仓均价
+  double long_pos_margin = 11;        // 持买保证金
+  double short_pos_margin = 12;       // 持卖保证金
+}
+
+service PositionService {
+  // 持仓信息查询(CME)
+  rpc Position(PositionRequest) returns (PositionReply) {}
+
+  // 持仓信息变动订阅
+  rpc PositionSubscribe(PositionRequest) returns (stream FullPosition) {}
+
+  // 资金账户变动订阅
+  rpc CapitalSubscribe(CapitalRequest) returns (stream CapitalReply) {}
+}

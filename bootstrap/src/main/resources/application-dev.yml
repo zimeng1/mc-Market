@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://rm-3nsuzk202ozajjlt14o.mysql.rds.aliyuncs.com:3306/pedb?tinyInt1isBit=false&useUnicode=true&characterEncoding=utf-8&autoReconnect=true&failOverReadOnly=false&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=CTT
+    username: pedb_user
+    password: 7rWyz1#2Q^N$Kg!GAt
+
+grpc:
+  server:
+    port: 50051
+    security:
+      enabled: false  # 禁用服务器端的 SSL
+  client:
+    marketDataService:
+      address: 'static://47.238.144.186:50057'
+      #      address: 'static://localhost:50051'
+      negotiationType: plaintext  # 使用明文传输，禁用客户端的 SSL
+    positionDataService:
+      address: 'static://47.238.144.186:50058'
+      #      address: 'static://localhost:50051'
+      negotiationType: plaintext  # 使用明文传输，禁用客户端的 SSL

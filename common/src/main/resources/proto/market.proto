@@ -1,0 +1,118 @@
+syntax = "proto3";
+import "common.proto";
+package market;
+message MarketDataRequest
+{
+  // 交易对
+  string symbol = 1;
+  // 账户id
+  string account_id = 2;
+}
+message MarketDataReply
+{
+  // 当前版本唯一标识符, 单调递增
+  uint64 sequence_number = 1;
+  // 行情的标识符
+  string symbol = 2;
+  // 买一价
+  common.BigDecimal bid_price = 3;
+  // 卖一价
+  common.BigDecimal ask_price = 4;
+  // 实际持仓量
+  common.BigDecimal position_quantity = 5;
+}
+message Depth {
+  int32 level = 1;
+  .common.BigDecimal price = 2;
+  .common.BigDecimal qty = 3;
+}
+message MarketDataSnapshotRequest {
+  // 交易对
+  string symbol = 1;
+  // 交易所id
+  string exchange_id = 2;
+}
+message MarketDataSnapshotReply
+{
+  // 当前版本唯一标识符, 单调递增
+  uint64 sequence_number = 1;
+  // 行情的标识符
+  string symbol = 2;
+  // 买档
+  repeated Depth bids = 3;
+  // 卖档
+  repeated Depth asks = 4;
+  // 最优中间件
+  .common.BigDecimal mid_price = 5;
+}
+enum OrderType
+{
+  // 市价
+  MARKET  = 0;
+  // 现价
+  LIMIT = 1;
+}
+enum OrderSide
+{
+  BUY = 0;
+  SELL = 1;
+}
+message Order
+{
+  string current_order_id = 1;        // 订单ID
+  OrderType order_type = 2;           // 订单类型
+  OrderSide order_side = 3;           // 订单方向
+  common.BigDecimal quantity = 4;     // 订单的数量
+  common.BigDecimal price = 5;        // 订单的价格
+  string symbol = 6;                  // 交易对
+  string batch_no = 7;                // 批次号
+  string order_level = 8;             // 订单层级
+}
+message OrderOperationRequest {
+  string traceId = 1;
+  repeated Order order = 2;
+  // 账户id
+  string account_id = 3;
+  string extra_info = 4;
+}
+enum Status {
+  SUCCESS = 0;
+  FAILURE = 1;
+}
+message OrderOperationReply {
+  Status status = 1;
+  string message = 2;
+}
+message OrderInstructionRequest {
+  // 交易对
+  string symbol = 1;
+  // 账户id
+  string account_id = 2;
+}
+message OrderInstructionReply {
+  // 当前版本唯一标识符, 单调递增
+  uint64 sequence_number = 1;
+  repeated Order order = 2;
+}
+// 用于行情信息的推送和接收订单指令
+service MarketDataService
+{
+  // 流式接口，用于持续推送行情信息
+  rpc StreamMarketData(MarketDataRequest) returns (stream MarketDataReply) {}
+  // 查询接口，用于价格引擎初始化及定时同步
+  rpc MarketData(MarketDataRequest) returns (MarketDataReply) {}
+  // 流式接口，用于接收订单指令
+  rpc StreamOrderInstruction(OrderInstructionRequest) returns (stream OrderInstructionReply) {}
+  // 流式接口，用于接收已成交订单
+  rpc StreamtradeOrderInstruction(OrderInstructionRequest) returns (stream OrderInstructionReply) {}
+  // 查询接口，用于价格引擎初始化及定时同步
+  rpc OrderInstruction(OrderInstructionRequest) returns (OrderInstructionReply) {}
+  // 下单
+  rpc PlaceOrder(OrderOperationRequest) returns (OrderOperationReply) {}
+  // 撤单
+  rpc CancelOrder(OrderOperationRequest) returns (OrderOperationReply) {}
+
+  rpc MarketDataSnapshot(MarketDataSnapshotRequest) returns (MarketDataSnapshotReply) {}
+
+  rpc StreamMarketDataSnapshot(MarketDataSnapshotRequest) returns (stream MarketDataSnapshotReply) {}
+}

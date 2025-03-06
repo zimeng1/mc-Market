@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ethh.dal.mapper.TradeDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.ethh.dal.entity.TradeDetailPO">
+        <id column="ID" property="id" />
+        <result column="CreateTime" property="createtime" />
+        <result column="UpdateTime" property="updatetime" />
+        <result column="StrategyID" property="strategyid" />
+        <result column="UserId" property="userid" />
+        <result column="AccountNo" property="accountno" />
+        <result column="FilledNo" property="filledno" />
+        <result column="OrderNo" property="orderno" />
+        <result column="SystemNo" property="systemno" />
+        <result column="LocalNo" property="localno" />
+        <result column="ExchangeCode" property="exchangecode" />
+        <result column="TreatyCode" property="treatycode" />
+        <result column="BuySale" property="buysale" />
+        <result column="FilledNumber" property="fillednumber" />
+        <result column="FilledPrice" property="filledprice" />
+        <result column="FilledDate" property="filleddate" />
+        <result column="FilledTime" property="filledtime" />
+        <result column="Commission" property="commission" />
+        <result column="OrderType" property="ordertype" />
+        <result column="AddReduce" property="addreduce" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, CreateTime, UpdateTime, StrategyID, UserId, AccountNo, FilledNo, OrderNo, SystemNo, LocalNo, ExchangeCode, TreatyCode, BuySale, FilledNumber, FilledPrice, FilledDate, FilledTime, Commission, OrderType, AddReduce
+    </sql>
+
+    <select id="pageTradeDetail" parameterType="org.ethh.dal.req.StrategyRequest" resultType="org.ethh.dal.dto.TradeDetailDTO">
+        select t1.CreateTime commissionTime,CONCAT(FilledDate, ' ', FilledTime) dealTime,TreatyCode tradingProduct ,t2.OrderLevel orderLevel,t3.algorithm_status algorithmStatus, BuySale direction,AddReduce positionDirection,FilledNumber dealQuantity,'已成交' orderStatus,FilledPrice/FilledNumber averageDealPrice,null averageOpenPrice,null realizedProfitLoss,Commission commissionFee
+        from algorithm_strategy t3
+        left join order_detail t2 on t2.StrategyID=t3.id
+        left join trade_detail t1 on t1.OrderNo =t2.OrderNo
+        where t3.id = #{req.algorithmStrategyId}
+        <if test="req.startTime != null">
+            AND t1.CreateTime >= #{req.startTime}
+        </if>
+        <if test="req.endTime != null">
+            <![CDATA[
+                AND t1.CreateTime <= #{req.endTime}
+                 ]]>
+        </if>
+    </select>
+
+    <select id="getHistoricalPositionInfo" resultType="org.ethh.dal.dto.HistoricalPositionInfoDTO">
+        select t1.TreatyCode product,t1.BuySale direction,sum(t1.FilledNumber) totalVolume,
+               sum(t1.FilledPrice) totalTradeValue,ROUND(sum(t1.FilledPrice)/sum(t1.FilledNumber), 2) averagePrice,
+               null totalPnL,sum(t1.Commission)totalCommission from trade_detail t1
+               left join order_detail t2 on t1.OrderNo=t2.OrderNo
+        where t2.StrategyID=#{strategyID}
+        Group BY TreatyCode,BuySale
+    </select>
+
+    <select id="getStrategyPerformance" resultType="org.ethh.dal.dto.StrategyPerformanceDTO">
+        select 'GC' symbol,t1.strategy_name strategyName,t2.account_name tradingAccount,t2.account_subject accountType,t2.initial_capital initialAmount,null inventoryPnL,null marketMakingPnL,t3.fee,DATEDIFF(NOW(), t1.created_at) runningDays,null annualizedReturn
+        from algorithm_strategy t1
+                 left join trading_account t2 on t1.trading_account_id=t2.id
+                 left join trading_product t3 on t1.trading_product_id=t3.id
+        where t1.id=#{id}
+    </select>
+</mapper>
